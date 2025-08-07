@@ -1,0 +1,638 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Xi-mông và Hành Trình Tìm Lại Nụ Cười</title>
+    <style>
+        /* CSS - Thiết kế giao diện trò chơi */
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@400;700&display=swap');
+
+        :root {
+            --primary-bg: #fdf6e3; /* Vàng kem */
+            --secondary-bg: #eaddc7; /* Nâu nhạt */
+            --text-color: #584b3d; /* Nâu gỗ */
+            --accent-color: #002b36; /* Xanh navy nhẹ */
+            --correct-color: #2aaa8a;
+            --incorrect-color: #dc3545;
+        }
+
+        body {
+            font-family: 'Be Vietnam Pro', sans-serif;
+            background-color: var(--primary-bg);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            margin: 0;
+            padding: 20px;
+            box-sizing: border-box;
+            text-align: center;
+        }
+
+        .game-container {
+            width: 100%;
+            max-width: 800px;
+            background-color: white;
+            border-radius: 20px;
+            box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+            padding: 20px 30px 30px 30px;
+            overflow: hidden;
+            transition: all 0.5s ease;
+        }
+
+        .screen {
+            display: none;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        h1, h2 {
+            color: var(--accent-color);
+        }
+
+        h1 {
+            font-size: 2.2rem;
+            margin-bottom: 15px;
+        }
+        
+        h2 {
+            font-size: 1.8rem;
+            margin-bottom: 20px;
+        }
+
+        p {
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+
+        .btn {
+            background-color: var(--accent-color);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.2rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: transform 0.2s ease, background-color 0.2s ease;
+            margin-top: 20px;
+            font-weight: bold;
+        }
+
+        .btn:hover {
+            transform: scale(1.05);
+            background-color: #004d66;
+        }
+
+        /* Màn 1: Trắc nghiệm */
+        #question-text {
+            font-size: 1.2rem;
+            font-weight: bold;
+            min-height: 60px;
+        }
+        .quiz-options {
+            display: grid;
+            grid-template-columns: 1fr;
+            gap: 15px;
+            margin-top: 25px;
+        }
+        
+        @media (min-width: 600px) {
+            .quiz-options {
+                grid-template-columns: 1fr 1fr;
+            }
+        }
+
+
+        .option-btn {
+            background-color: var(--secondary-bg);
+            border: 2px solid transparent;
+            color: var(--text-color);
+            padding: 15px;
+            font-size: 1rem;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-align: left;
+            width: 100%;
+            height: 100%;
+        }
+
+        .option-btn:hover:not(:disabled) {
+            border-color: var(--accent-color);
+            background-color: #f5ece0;
+        }
+        
+        .option-btn.correct {
+            background-color: var(--correct-color);
+            color: white;
+            border-color: var(--correct-color);
+            transform: scale(1.02);
+        }
+        
+        .option-btn.incorrect {
+            background-color: var(--incorrect-color);
+            color: white;
+            border-color: var(--incorrect-color);
+        }
+        
+        .option-btn:disabled {
+            cursor: not-allowed;
+            opacity: 0.8;
+        }
+
+        #feedback {
+            margin-top: 20px;
+            font-weight: bold;
+            font-size: 1.2rem;
+            height: 30px;
+        }
+
+        /* Màn 2: Nối chi tiết */
+        .matching-container {
+            display: flex;
+            flex-direction: column;
+            justify-content: space-around;
+            margin-top: 20px;
+            gap: 20px;
+        }
+        
+        @media (min-width: 768px) {
+            .matching-container {
+                flex-direction: row;
+            }
+        }
+
+        .column {
+            width: 100%;
+        }
+        
+        @media (min-width: 768px) {
+            .column {
+                width: 48%;
+            }
+        }
+
+        .column h3 {
+            border-bottom: 2px solid var(--accent-color);
+            padding-bottom: 10px;
+        }
+
+        .draggable {
+            background: var(--secondary-bg);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            cursor: grab;
+            user-select: none;
+            transition: background-color 0.2s;
+            border: 2px solid var(--secondary-bg);
+        }
+        .draggable.dragging {
+            opacity: 0.5;
+            background: #c1b2a0;
+        }
+
+        .dropzone {
+            background: #fff;
+            border: 2px dashed var(--accent-color);
+            padding: 12px;
+            margin: 10px 0;
+            border-radius: 8px;
+            min-height: 80px;
+            transition: background-color 0.3s, border-color 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .dropzone.dragover {
+            background-color: #e3f2fd;
+            border-color: #005f73;
+        }
+        
+        .dropzone.matched {
+            border-style: solid;
+            border-color: var(--correct-color);
+            background-color: #f0fff4;
+            color: var(--text-color);
+            cursor: default;
+        }
+        .dropzone.matched .draggable {
+            cursor: default;
+            background-color: var(--correct-color);
+            color: white;
+            border-color: var(--correct-color);
+        }
+
+        /* Màn 3: Đoán nhân vật */
+        #quote-display {
+            background-color: var(--secondary-bg);
+            padding: 20px;
+            border-radius: 10px;
+            font-style: italic;
+            margin: 25px 0;
+            font-size: 1.2rem;
+            border-left: 5px solid var(--accent-color);
+            text-align: left;
+        }
+        .character-options {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        @media (min-width: 600px) {
+            .character-options {
+                flex-direction: row;
+                justify-content: center;
+            }
+        }
+        
+        .character-options .btn {
+            width: 100%;
+            max-width: 250px;
+        }
+
+
+        /* Màn hình kết thúc */
+        #final-score {
+            font-size: 2.5rem;
+            color: var(--accent-color);
+            font-weight: bold;
+            margin: 10px 0;
+        }
+        #end-message {
+            margin-top: 15px;
+            font-size: 1.2rem;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="game-container">
+        <!-- Màn hình Bắt đầu -->
+        <div id="start-screen" class="screen active">
+            <h1>Xi-mông và Hành Trình Tìm Lại Nụ Cười</h1>
+            <p>Một trò chơi nhỏ dựa trên tác phẩm "Bố của Xi-mông" của nhà văn Guy de Maupassant. Hãy cùng ôn lại những bài học sâu sắc về tình yêu thương và lòng trắc ẩn nhé!</p>
+            <button class="btn" onclick="startGame()">Bắt đầu chơi</button>
+        </div>
+
+        <!-- Màn 1: Trắc nghiệm -->
+        <div id="stage-1" class="screen">
+            <h2>Màn 1: Trắc nghiệm Hiểu bài</h2>
+            <p id="question-text">Đây là câu hỏi?</p>
+            <div id="quiz-options" class="quiz-options">
+                <!-- Các nút lựa chọn sẽ được tạo bằng JS -->
+            </div>
+            <div id="feedback"></div>
+        </div>
+
+        <!-- Màn 2: Nối chi tiết -->
+        <div id="stage-2" class="screen">
+            <h2>Màn 2: Nối Chi tiết & Bài học</h2>
+            <p>Kéo các hành động/chi tiết ở cột trái vào bài học ý nghĩa tương ứng ở cột phải.</p>
+            <div class="matching-container">
+                <div class="column">
+                    <h3>Hành động / Chi tiết</h3>
+                    <div id="draggable-items"></div>
+                </div>
+                <div class="column">
+                    <h3>Bài học / Ý nghĩa</h3>
+                    <div id="dropzones"></div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Màn 3: Đoán nhân vật -->
+        <div id="stage-3" class="screen">
+            <h2>Màn 3: Góc nhìn của ai?</h2>
+            <p>Mô tả dưới đây đang nói về nhân vật hay đối tượng nào trong truyện?</p>
+            <div id="quote-display"></div>
+            <div id="character-options" class="character-options">
+                <!-- Các nút lựa chọn nhân vật sẽ được tạo bằng JS -->
+            </div>
+        </div>
+
+        <!-- Màn hình Kết thúc -->
+        <div id="end-screen" class="screen">
+            <h2>Hành trình đã hoàn tất!</h2>
+            <p>Cảm ơn bạn đã tham gia. Tổng điểm của bạn là:</p>
+            <p id="final-score"></p>
+            <p id="end-message"></p>
+            <button class="btn" onclick="restartGame()">Chơi lại</button>
+        </div>
+    </div>
+
+    <script>
+        // JavaScript - Logic của trò chơi
+
+        // --- DỮ LIỆU TRÒ CHƠI ---
+
+        const quizData = [
+            {
+                question: "Vì sao Xi-mông từng muốn tìm đến cái chết bên bờ sông?",
+                options: ["Vì bị mẹ mắng phạt", "Vì bị bạn bè ở trường trêu chọc, cô lập do không có bố", "Vì nhớ người bố đã mất của mình", "Vì không muốn đi học nữa"],
+                answer: 1 // Chỉ số của câu trả lời đúng
+            },
+            {
+                question: "Hành động nhận làm bố của bác Phi-líp thể hiện rõ nhất phẩm chất gì?",
+                options: ["Sự giàu có và hào phóng", "Sự cô đơn và muốn có con", "Lòng nhân ái, trắc ẩn và sự thấu cảm sâu sắc", "Sự bốc đồng, quyết định vội vàng"],
+                answer: 2
+            },
+            {
+                question: "Tác giả Guy de Maupassant kể lại câu chuyện theo ngôi thứ mấy và tác dụng của nó là gì?",
+                options: ["Ngôi thứ nhất, giúp nhân vật bộc lộ nội tâm", "Ngôi thứ hai, để trò chuyện trực tiếp với độc giả", "Ngôi thứ ba, giúp người kể chuyện linh hoạt, khách quan", "Ngôi thứ nhất và ba xen kẽ, tạo sự đa dạng"],
+                answer: 2
+            },
+            {
+                question: "Nhân vật Xi-mông đại diện cho khát khao mãnh liệt nào của con người?",
+                options: ["Khát khao trở nên giàu có", "Khát khao được đi khắp thế giới", "Khát khao có một gia đình trọn vẹn và được yêu thương", "Khát khao có nhiều bạn bè"],
+                answer: 2
+            },
+             {
+                question: "Chi tiết 'con cá nhỏ' mà bác Phi-líp cứu có ý nghĩa biểu tượng gì?",
+                options: ["Tượng trưng cho món quà bác Phi-líp tặng Xi-mông", "Tượng trưng cho một sinh linh bé bỏng, đáng thương được cứu rỗi, cũng như chính Xi-mông", "Tượng trưng cho sự trù phú của dòng sông", "Tượng trưng cho một bữa ăn ngon"],
+                answer: 1
+            }
+        ];
+
+        const matchingData = [
+            { id: 1, detail: "Xi-mông bị bạn bè chế giễu vì không có cha.", lesson: "Nỗi đau và sự cô lập do định kiến xã hội gây ra." },
+            { id: 2, detail: "Bác Phi-líp hứa sẽ cho Xi-mông một người bố.", lesson: "Lòng trắc ẩn và tình yêu thương có thể cứu rỗi một tâm hồn." },
+            { id: 3, detail: "Xi-mông tự hào hét lên với các bạn rằng mình đã có bố.", lesson: "Sự hồi sinh của niềm tin, lòng tự trọng và niềm vui được công nhận." }
+        ];
+
+        const characterData = [
+            { quote: "Cảm thấy đau đớn, tủi nhục đến cùng cực vì hoàn cảnh của mình, nhưng vẫn giữ được nét ngây thơ, khao khát tình thương.", character: "Xi-mông" },
+            { quote: "Là biểu tượng của lòng nhân ái, hành động không chỉ để cứu một đứa trẻ mà còn là sự phản kháng thầm lặng với định kiến xã hội.", character: "Bác Phi-líp" },
+            { quote: "Đại diện cho sự tàn nhẫn vô tâm của xã hội, gây tổn thương cho người khác bằng lời nói mà không ý thức được hậu quả.", character: "Bạn bè của Xi-mông" }
+        ];
+
+        // --- BIẾN TRẠNG THÁI TRÒ CHƠI ---
+
+        let currentStage = 0;
+        let score = 0;
+        let currentQuestionIndex = 0;
+        let matchedPairs = 0;
+
+        // --- LẤY CÁC PHẦN TỬ DOM ---
+
+        const screens = document.querySelectorAll('.screen');
+        const feedbackEl = document.getElementById('feedback');
+        
+        // --- CÁC HÀM XỬ LÝ TRÒ CHƠI ---
+
+        function showScreen(screenId) {
+            screens.forEach(screen => {
+                screen.classList.remove('active');
+            });
+            document.getElementById(screenId).classList.add('active');
+        }
+
+        function startGame() {
+            currentStage = 1;
+            score = 0;
+            currentQuestionIndex = 0;
+            showScreen('stage-1');
+            setupStage1();
+        }
+
+        function restartGame() {
+            // Đặt lại trò chơi về trạng thái ban đầu và hiển thị màn hình bắt đầu
+            currentStage = 0;
+            score = 0;
+            currentQuestionIndex = 0;
+            matchedPairs = 0;
+            showScreen('start-screen');
+        }
+
+        // --- LOGIC MÀN 1: TRẮC NGHIỆM ---
+        
+        function setupStage1() {
+            feedbackEl.textContent = '';
+            loadQuizQuestion();
+        }
+
+        function loadQuizQuestion() {
+            const questionData = quizData[currentQuestionIndex];
+            document.getElementById('question-text').textContent = questionData.question;
+            const optionsContainer = document.getElementById('quiz-options');
+            optionsContainer.innerHTML = '';
+            
+            // Xóa các lớp cũ và kích hoạt lại các nút
+            const optionButtons = document.querySelectorAll('.option-btn');
+            optionButtons.forEach(btn => {
+                btn.disabled = false;
+                btn.classList.remove('correct', 'incorrect');
+            });
+            feedbackEl.textContent = '';
+
+            questionData.options.forEach((option, index) => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('option-btn');
+                button.onclick = () => selectAnswer(index, button);
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        function selectAnswer(selectedIndex, button) {
+            const isCorrect = selectedIndex === quizData[currentQuestionIndex].answer;
+            const optionButtons = document.querySelectorAll('.option-btn');
+            
+            optionButtons.forEach(btn => btn.disabled = true); // Vô hiệu hóa các nút
+
+            if (isCorrect) {
+                score += 10;
+                button.classList.add('correct');
+                feedbackEl.textContent = 'Chính xác! Tình yêu thương thật diệu kỳ.';
+                feedbackEl.style.color = 'var(--correct-color)';
+            } else {
+                button.classList.add('incorrect');
+                feedbackEl.textContent = 'Chưa đúng rồi, hãy suy nghĩ thêm nhé!';
+                feedbackEl.style.color = 'var(--incorrect-color)';
+                // Hiển thị câu trả lời đúng
+                optionButtons[quizData[currentQuestionIndex].answer].classList.add('correct');
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < quizData.length) {
+                    loadQuizQuestion();
+                } else {
+                    // Chuyển sang màn 2
+                    currentStage = 2;
+                    showScreen('stage-2');
+                    setupStage2();
+                }
+            }, 2000); // Đợi 2 giây trước khi chuyển câu hỏi
+        }
+        
+        // --- LOGIC MÀN 2: NỐI CHI TIẾT ---
+        
+        function setupStage2() {
+            matchedPairs = 0;
+            const draggableContainer = document.getElementById('draggable-items');
+            const dropzoneContainer = document.getElementById('dropzones');
+            draggableContainer.innerHTML = '';
+            dropzoneContainer.innerHTML = '';
+
+            // Xáo trộn mảng để thứ tự ngẫu nhiên
+            const shuffledData = [...matchingData].sort(() => Math.random() - 0.5);
+
+            shuffledData.forEach(item => {
+                const draggable = document.createElement('div');
+                draggable.id = `detail-${item.id}`;
+                draggable.textContent = item.detail;
+                draggable.classList.add('draggable');
+                draggable.draggable = true;
+                draggableContainer.appendChild(draggable);
+            });
+            
+            matchingData.forEach(item => {
+                 const dropzone = document.createElement('div');
+                dropzone.classList.add('dropzone');
+                dropzone.dataset.id = item.id;
+                dropzone.textContent = item.lesson;
+                dropzoneContainer.appendChild(dropzone);
+            });
+
+            addDragAndDropListeners();
+        }
+
+        function addDragAndDropListeners() {
+            const draggables = document.querySelectorAll('.draggable');
+            const dropzones = document.querySelectorAll('.dropzone');
+
+            draggables.forEach(draggable => {
+                draggable.addEventListener('dragstart', () => {
+                    draggable.classList.add('dragging');
+                });
+                draggable.addEventListener('dragend', () => {
+                    draggable.classList.remove('dragging');
+                });
+            });
+
+            dropzones.forEach(zone => {
+                zone.addEventListener('dragover', e => {
+                    e.preventDefault();
+                    if(!zone.classList.contains('matched')) {
+                       zone.classList.add('dragover');
+                    }
+                });
+                zone.addEventListener('dragleave', () => {
+                    zone.classList.remove('dragover');
+                });
+                zone.addEventListener('drop', e => {
+                    e.preventDefault();
+                    zone.classList.remove('dragover');
+                    const draggingEl = document.querySelector('.dragging');
+                    if (draggingEl && !zone.classList.contains('matched')) {
+                        const draggableId = draggingEl.id.split('-')[1];
+                        if (zone.dataset.id === draggableId) {
+                            // Nối đúng
+                            score += 10;
+                            matchedPairs++;
+                            zone.textContent = ''; // Xóa văn bản bài học
+                            zone.appendChild(draggingEl); // Chuyển phần tử được kéo vào
+                            zone.classList.add('matched');
+                            draggingEl.draggable = false;
+                            
+                            if(matchedPairs === matchingData.length) {
+                                setTimeout(() => {
+                                    currentStage = 3;
+                                    currentQuestionIndex = 0; // Reset for next stage
+                                    showScreen('stage-3');
+                                    setupStage3();
+                                }, 1500);
+                            }
+                        }
+                    }
+                });
+            });
+        }
+        
+        // --- LOGIC MÀN 3: ĐOÁN NHÂN VẬT ---
+        
+        function setupStage3() {
+            currentQuestionIndex = 0; // Bắt đầu từ câu đầu tiên của màn 3
+            loadCharacterQuestion();
+        }
+        
+        function loadCharacterQuestion() {
+            const data = characterData[currentQuestionIndex];
+            document.getElementById('quote-display').textContent = `"${data.quote}"`;
+            
+            const optionsContainer = document.getElementById('character-options');
+            optionsContainer.innerHTML = '';
+            
+            // Lấy tất cả các tên nhân vật để làm lựa chọn
+            const characters = characterData.map(d => d.character);
+            characters.forEach(char => {
+                const button = document.createElement('button');
+                button.textContent = char;
+                button.classList.add('btn');
+                button.onclick = (event) => selectCharacter(char, data.character, event.target);
+                optionsContainer.appendChild(button);
+            });
+        }
+        
+        function selectCharacter(selected, correct, button) {
+            const characterButtons = document.querySelectorAll('#character-options .btn');
+            characterButtons.forEach(btn => btn.disabled = true);
+            
+            if (selected === correct) {
+                score += 10;
+                button.classList.add('correct');
+            } else {
+                button.classList.add('incorrect');
+                // Tìm và highlight đáp án đúng
+                characterButtons.forEach(btn => {
+                    if (btn.textContent === correct) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                if (currentQuestionIndex < characterData.length) {
+                    loadCharacterQuestion();
+                } else {
+                    endGame();
+                }
+            }, 2000);
+        }
+
+        // --- LOGIC KẾT THÚC TRÒ CHƠI ---
+
+        function endGame() {
+            showScreen('end-screen');
+            document.getElementById('final-score').textContent = `${score} điểm`;
+            
+            let message = '';
+            const totalScore = (quizData.length + matchingData.length + characterData.length) * 10;
+            if (score === totalScore) {
+                message = "Tuyệt vời! Em đã thực sự thấu hiểu bài học về lòng nhân ái và tình yêu thương.";
+            } else if (score >= totalScore * 0.7) {
+                message = "Làm tốt lắm! Em đã nắm vững các kiến thức trọng tâm của bài học.";
+            } else {
+                message = "Cố gắng lên nhé! Hãy đọc lại tác phẩm và chơi lại để củng cố kiến thức nhé.";
+            }
+            document.getElementById('end-message').textContent = message;
+        }
+
+    </script>
+</body>
+</html>
